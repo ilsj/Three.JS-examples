@@ -17,14 +17,14 @@ body {color: #808080;font-family:Monospace;font-size:13px;text-align:center;back
 	var camera, scene, renderer, controls;
 	var windowHalfX = window.innerWidth / 2;
 	var windowHalfY = window.innerHeight / 2;
+	var loadingManager = new THREE.LoadingManager();
 
 	init();
-	animate();
+	// animate();
 
 	function init() {
 		container = document.getElementById('container');
 
-		document.addEventListener('keydown', onKeyDown, false);
 		renderer = new THREE.WebGLRenderer();
 		renderer.setClearColor(0xffffff);
 		renderer.setPixelRatio(window.devicePixelRatio);
@@ -37,27 +37,28 @@ body {color: #808080;font-family:Monospace;font-size:13px;text-align:center;back
 		controls = new THREE.OrbitControls(camera, renderer.domElement);
 		controls.minDistance = 3;
 		controls.maxDistance = 80;
-		controls.noPan = true;
+		controls.enablePan = false;
+		controls.addEventListener('change', render);
 		scene = new THREE.Scene();
 
 		/*Light*/
-		
+
 		scene.add( new THREE.AmbientLight( 0xffffff ) );
 
 		var loaderJSON = new THREE.JSONLoader();
 
 		loaderJSON.load( 'rubik.json', function( geometryJSON ) {
-			var material = new THREE.MeshPhongMaterial({ 
-				map: new THREE.TextureLoader().load("diffuse.png"), 
-				normalMap: new THREE.TextureLoader().load("normalCycles.png") 
+			var material = new THREE.MeshPhongMaterial({
+				map: new THREE.TextureLoader(loadingManager).load("diffuse.png"),
+				normalMap: new THREE.TextureLoader(loadingManager).load("normalCycles.png")
 			}); //, shininess: 256
 			var modelJSON = new THREE.Mesh( geometryJSON, material );
 			scene.add(modelJSON);
 		} );
 
 		loaderJSON.load( 'plane.json', function( geometryJSON ) {
-			var material = new THREE.MeshPhongMaterial({ 
-				map: new THREE.THREE.TextureLoader().load("diffusePlane.png") 
+			var material = new THREE.MeshPhongMaterial({
+				map: new THREE.TextureLoader(loadingManager).load("diffusePlane.png")
 			});
 			var modelJSON = new THREE.Mesh( geometryJSON, material );
 			scene.add(modelJSON);
@@ -70,6 +71,11 @@ body {color: #808080;font-family:Monospace;font-size:13px;text-align:center;back
 		camera.aspect = window.innerWidth / window.innerHeight;
 		camera.updateProjectionMatrix();
 		renderer.setSize(window.innerWidth, window.innerHeight);
+		render();
+	}
+
+	loadingManager.onLoad = function () {
+		render();
 	}
 
 	function animate() {
