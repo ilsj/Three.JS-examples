@@ -20,7 +20,6 @@ body {color: #808080;font-family:Monospace;font-size:13px;text-align:center;back
 	var loadingManager = new THREE.LoadingManager();
 
 	init();
-	// animate();
 
 	function init() {
 		container = document.getElementById('container');
@@ -35,7 +34,7 @@ body {color: #808080;font-family:Monospace;font-size:13px;text-align:center;back
 		camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 100);
 		camera.position.set(10, 10, 10);
 		controls = new THREE.OrbitControls(camera, renderer.domElement);
-		controls.minDistance = 3;
+		controls.minDistance = 7;
 		controls.maxDistance = 80;
 		controls.enablePan = false;
 		controls.addEventListener('change', render);
@@ -75,12 +74,6 @@ body {color: #808080;font-family:Monospace;font-size:13px;text-align:center;back
 	}
 
 	loadingManager.onLoad = function () {
-		render();
-	}
-
-	function animate() {
-		requestAnimationFrame(animate);
-		controls.update();
 		render();
 	}
 
