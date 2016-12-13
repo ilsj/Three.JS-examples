@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>Rubik's Cube</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+<style>
+body {color: #808080;font-family:Monospace;font-size:13px;text-align:center;background-color: #ffffff;margin: 0px;overflow: hidden;}#info {position: absolute;top: 0px; width: 100%;padding: 5px;}a {color: #0080ff;}
+</style>
+</head>
+<body>
+<div id="container"></div>
+<script src="../three.js/three.min.js"></script>
+<script src="../three.js/controls/orbitcontrols.js"></script>
+<script>
+	var container;
+	var camera, scene, renderer, controls;
+	var meshContainer;
+	var windowHalfX = window.innerWidth / 2;
+	var windowHalfY = window.innerHeight / 2;
+	var rotate = false;
+	var raycaster = new THREE.Raycaster();
+	var mouse = new THREE.Vector2();
+
+	init();
+	animate();
+
+	function init() {
+		container = document.getElementById('container');
+
+		document.addEventListener('keydown', onKeyDown, false);
+		renderer = new THREE.WebGLRenderer();
+		renderer.setClearColor(0xffffff);
+		renderer.setPixelRatio(window.devicePixelRatio);
+		renderer.setSize(window.innerWidth, window.innerHeight);
+		container.appendChild(renderer.domElement);
+		window.addEventListener( 'resize', onWindowResize, false );
+		window.addEventListener( 'click', onMouseClick, false );
+
+		camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 100000);
+		camera.position.set(10, 10, 10);
+		controls = new THREE.OrbitControls(camera, renderer.domElement);
+		controls.damping = 0.2;
+		controls.addEventListener('change', render);
+		controls.minDistance = 1;
+		controls.maxDistance = 10000;
+		controls.noPan = true;
+		scene = new THREE.Scene();
+		meshContainer = new THREE.Group();
+		//meshContainer.position.y = -1000;
+		scene.add(meshContainer);
+
+		/*Light*/
+
+		var ambientLight = new THREE.AmbientLight( 0xffffff ); // soft white light
+		scene.add( ambientLight );
+
+		// var directionalLight = new THREE.DirectionalLight( 0xffffff, 1 );
+		// directionalLight.position.set(10000, 10000, 10000);
+		// scene.add( directionalLight );
+		//
+		// var hemisphereLight = new THREE.HemisphereLight( 0xffffff, 0xffffff, 0.1);
+		// scene.add( hemisphereLight );
+
+		var onKeyDown = function (event) {
+			//console.log(event.keyCode);
+			switch(event.keyCode) {
+				case 82: // r
+					rotate = !rotate;
+					break;
+			}
+		};
+
+		// var box = new THREE.BoxGeometry( 1, 1, 1 );
+		// var texture = new THREE.ImageUtils.loadTexture("3d/img/default/mapBlack.jpg");
+		// var normal = new THREE.ImageUtils.loadTexture("3d/img/normal.png");
+		// var material = new THREE.MeshPhongMaterial({ map: texture, normalMap: normal });
+		// var modelJSON = new THREE.Mesh( box, material );
+
+		// var meshes = new Array(
+		// 	"3d/test/test1.json",
+		// 	"3d/test/test2.json");
+		// var normals = new Array(
+		// 	"3d/test/test1normal.jpg",
+		// 	'3d/test/test2normal.png');
+		// var loaderJSON = new THREE.JSONLoader();
+		// for (var i=0; i<meshes.length; i++) {
+		// 	loaderJSON.load( meshes[ii], function( geometryJSON ) {
+		// 		var texture = new THREE.ImageUtils.loadTexture("3d/img/default/mapBlack.jpg");
+		// 		var normal = new THREE.ImageUtils.loadTexture(normals[ii]);
+		// 		console.log(meshes.length + " " + ii + " " + normals[ii]);
+		// 		var material = new THREE.MeshPhongMaterial({ map: texture, normalMap: normal, shininess: 1000 });
+		// 		var modelJSON = new THREE.Mesh( geometryJSON, material );
+		// 			modelJSON.position.set(ii, 0, 0);
+		// 		meshContainer.add(modelJSON);
+		// 	} );
+		// }
+
+		var loaderJSON = new THREE.JSONLoader();
+
+		meshesRubik = "3d/rubik/rubik.json";
+		loaderJSON.load( meshesRubik, function( geometryJSON ) {
+			//var material = materials[ 0 ];
+			var texture = new THREE.ImageUtils.loadTexture("3d/rubik/diffuse.png");
+			var normal = new THREE.ImageUtils.loadTexture("3d/rubik/normalCycles.png");
+			var material = new THREE.MeshPhongMaterial({ map: texture, normalMap: normal }); //, shininess: 256
+			var modelJSON = new THREE.Mesh( geometryJSON, material );
+			meshContainer.add(modelJSON);
+		} );
+
+		meshesPlane = "3d/rubik/plane.json";
+		loaderJSON.load( meshesPlane, function( geometryJSON ) {
+			//var material = materials[ 0 ];
+			var texture = new THREE.ImageUtils.loadTexture("3d/rubik/diffusePlane.png");
+			var material = new THREE.MeshPhongMaterial({ map: texture });
+			var modelJSON = new THREE.Mesh( geometryJSON, material );
+			meshContainer.add(modelJSON);
+		} );
+	}
+
+	function onWindowResize() {
+		windowHalfX = window.innerWidth / 2;
+		windowHalfY = window.innerHeight / 2;
+		camera.aspect = window.innerWidth / window.innerHeight;
+		camera.updateProjectionMatrix();
+		renderer.setSize(window.innerWidth, window.innerHeight);
+	}
+
+	function onMouseClick( event ) {
+		// calculate mouse position in normalized device coordinates
+		// (-1 to +1) for both components
+		mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
+		mouse.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
+
+
+		// update the picking ray with the camera and mouse position
+		raycaster.setFromCamera( mouse, camera );
+
+		// calculate objects intersecting the picking ray
+		var intersects = raycaster.intersectObjects( meshContainer.children );
+		//console.log(mouse);
+
+		if (intersects.length > 0) {
+			//console.log(intersects[ 0 ].object);
+			// intersects[ 0 ].object.position.x += 10;
+			// camera.lookAt(intersects[ 0 ].object.position);
+			// controls.target = intersects[ 0 ].object.position;
+			// for ( var i = 0; i < intersects.length; i++ ) {
+
+			// 	intersects[ i ].object.material.color.set( 0xff0000 );
+
+			// }
+		}
+	}
+
+	function animate() {
+		requestAnimationFrame(animate);
+		controls.update();
+		render();
+	}
+
+	function render() {
+		if (rotate) meshContainer.rotation.y += 0.002;
+		renderer.render(scene, camera);
+	}
+</script>
+</body>
+</html>
