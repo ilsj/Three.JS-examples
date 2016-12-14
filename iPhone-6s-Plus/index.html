@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>iPhone 6S Plus</title>
+<meta charset="utf-8">
+<style type="text/css" media="screen">
+
+#btnGold{fill:#E3D0BA;}
+#btnRoseGold{fill:#EDCCBD;}
+#btnSilver{fill:#DDDFDE;}
+#btnSpaceGray{fill:#ABAEB1;}
+div[color] {position: absolute;width: 100%;text-align: center;}
+div[color] svg {width: 163px;height: 40px;}
+div[color] svg circle {cursor: pointer}
+html, body {overflow: hidden;}
+
+</style>
+</head>
+<body>
+
+<div color><svg>
+<circle id="btnSilver" cx="20" cy="20" r="20"/>
+<circle id="btnGold" cx="61" cy="20" r="20"/>
+<circle id="btnSpaceGray" cx="102" cy="20" r="20"/>
+<circle id="btnRoseGold" cx="143" cy="20" r="20"/>
+</svg></div>
+
+<div id="container"></div>
+<script src="../three.js/three.min.js"></script>
+<script src="../three.js/OrbitControls.js"></script>
+<script src="iphone6s.js"></script>
+<script language="javascript">
+	init();
+	animate();
+</script>
+</body>
+</html>

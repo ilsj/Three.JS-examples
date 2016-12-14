@@ -12,74 +12,9 @@ body {color: #808080;font-family:Monospace;font-size:13px;text-align:center;back
 <div id="container"></div>
 <script src="../three.js/three.min.js"></script>
 <script src="../three.js/OrbitControls.js"></script>
+<script src="Rubik-s-cube.js"></script>
 <script>
-	var container;
-	var camera, scene, renderer, controls;
-	var windowHalfX = window.innerWidth / 2;
-	var windowHalfY = window.innerHeight / 2;
-	var loadingManager = new THREE.LoadingManager();
-
 	init();
-
-	function init() {
-		container = document.getElementById('container');
-
-		renderer = new THREE.WebGLRenderer();
-		renderer.setClearColor(0xffffff);
-		renderer.setPixelRatio(window.devicePixelRatio);
-		renderer.setSize(window.innerWidth, window.innerHeight);
-		container.appendChild(renderer.domElement);
-		window.addEventListener( 'resize', onWindowResize, false );
-
-		camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 100);
-		camera.position.set(10, 10, 10);
-		controls = new THREE.OrbitControls(camera, renderer.domElement);
-		controls.minDistance = 7;
-		controls.maxDistance = 80;
-		controls.enablePan = false;
-		controls.addEventListener('change', render);
-		scene = new THREE.Scene();
-
-		/*Light*/
-
-		scene.add( new THREE.AmbientLight( 0xffffff ) );
-
-		var loaderJSON = new THREE.JSONLoader();
-
-		loaderJSON.load( 'rubik.json', function( geometryJSON ) {
-			var material = new THREE.MeshPhongMaterial({
-				map: new THREE.TextureLoader(loadingManager).load("diffuse.png"),
-				normalMap: new THREE.TextureLoader(loadingManager).load("normalCycles.png")
-			}); //, shininess: 256
-			var modelJSON = new THREE.Mesh( geometryJSON, material );
-			scene.add(modelJSON);
-		} );
-
-		loaderJSON.load( 'plane.json', function( geometryJSON ) {
-			var material = new THREE.MeshPhongMaterial({
-				map: new THREE.TextureLoader(loadingManager).load("diffusePlane.png")
-			});
-			var modelJSON = new THREE.Mesh( geometryJSON, material );
-			scene.add(modelJSON);
-		} );
-	}
-
-	function onWindowResize() {
-		windowHalfX = window.innerWidth / 2;
-		windowHalfY = window.innerHeight / 2;
-		camera.aspect = window.innerWidth / window.innerHeight;
-		camera.updateProjectionMatrix();
-		renderer.setSize(window.innerWidth, window.innerHeight);
-		render();
-	}
-
-	loadingManager.onLoad = function () {
-		render();
-	}
-
-	function render() {
-		renderer.render(scene, camera);
-	}
 </script>
 </body>
 </html>
