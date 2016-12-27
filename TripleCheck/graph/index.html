@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>triplecheck.tech > software view</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+
+		<link rel="stylesheet" type="text/css" href="libraries/theme-default.css"/>
+	</head>
+	<body>
+		<script src="libraries/three.js"></script>
+		<script src="libraries/tween.min.js"></script>
+		<script src="libraries/TrackballControls.js"></script>
+		<script src="libraries/CSS3DRenderer.js"></script>
+
+		<div id="container"></div>
+		<div id="info"><a href="http://triplecheck.tech" target="_blank">triplecheck.tech</a> > software view        .</div>
+		<div id="menu">
+			<button id="table">TABLE</button>
+			<button id="sphere">SPHERE</button>
+			<button id="helix">HELIX</button>
+			<button id="grid">GRID</button>
+		</div>
+
+		<script src="data/nodes.js"></script>
+		<script src="data/links.js"></script>
+		<script>
+			var camera, scene, renderer;
+			var controls;
+			var tweens = 0;
+
+			var objects = [];
+			var targets = { table: [], sphere: [], helix: [], grid: [] };
+
+			init();
+			animate();
+
+			function draw(p1,p2){
+			    var mat = new THREE.LineBasicMaterial({color:0x884488})
+			    var geo = new THREE.Geometry()
+			    geo.vertices.push( p1 )
+			    geo.vertices.push( p2 )
+			    var line = new THREE.Line(geo,mat)
+			    scene.add(line)
+			    return line
+			}
+
+			function init() {
+
+				camera = new THREE.PerspectiveCamera( 40, window.innerWidth / window.innerHeight, 1, 60000 );
+				// initial view, how far are we from the graph?
+				camera.position.z = 8000;
+
+				scene = new THREE.Scene();
+
+				// table
+
+				// how many data fields has each element on the nodes.js file?
+				var jsonArraySize = 9;
+
+				for ( var i = 0; i < table.length; i += jsonArraySize ) {
+
+					var element = document.createElement( 'div' );
+					element.className = 'element';
+
+					// should this file be drawn in red color because of a risky license?
+					if(table[ i + 7 ]){
+						element.style.backgroundColor = 'rgba(236,0,31,' + ( Math.random() * 0.5 + 0.25 ) + ')';
+					}else{
+						element.style.backgroundColor = 'rgba(0,127,127,' + ( Math.random() * 0.5 + 0.25 ) + ')';
+					}
+
+					var number = document.createElement( 'div' );
+					number.className = 'number';
+					number.textContent = table[ i + 6 ];
+					element.appendChild( number );
+
+					var symbol = document.createElement( 'div' );
+					if(table[ i + 7 ])
+						symbol.className = 'symbolred';
+					else
+						symbol.className = 'symbol';
+
+					symbol.textContent = table[ i + 1 ];
+					element.appendChild( symbol );
+
+					// has copyright?
+					if(table[ i + 8 ]){
+						var copyright = document.createElement( 'div' );
+						copyright.className = 'copyright';
+						copyright.textContent = '©';
+						element.appendChild( copyright );
+					}
+
+					var details = document.createElement( 'div' );
+					details.className = 'details';
+					details.innerHTML = table[ i + 2 ] + '<br>' + table[ i + 3 ];
+					element.appendChild( details );
+
+
+
+					var object = new THREE.CSS3DObject( element );
+					object.position.x = Math.random() * 4000 - 2000;
+					object.position.y = Math.random() * 4000 - 2000;
+					object.position.z = Math.random() * 4000 - 2000;
+					scene.add( object );
+
+					objects.push( object );
+
+					//
+
+					var object = new THREE.Object3D();
+					object.position.x = ( table[ i + 4 ] * 140 ) - 1330;
+					object.position.y = - ( table[ i + 5 ] * 180 ) + 990;
+
+					targets.table.push( object );
+
+				}
+
+				// sphere
+
+				var vector = new THREE.Vector3();
+				var spherical = new THREE.Spherical();
+
+				for ( var i = 0, l = objects.length; i < l; i ++ ) {
+
+					var phi = Math.acos( -1 + ( 2 * i ) / l );
+					var theta = Math.sqrt( l * Math.PI ) * phi;
+
+					var object = new THREE.Object3D();
+
+					spherical.set( 1200, phi, theta );
+
+					object.position.setFromSpherical( spherical );
+
+					vector.copy( object.position ).multiplyScalar( 2 );
+
+					object.lookAt( vector );
+
+					targets.sphere.push( object );
+
+				}
+
+				// helix
+
+				var vector = new THREE.Vector3();
+				var cylindrical = new THREE.Cylindrical();
+
+				for ( var i = 0, l = objects.length; i < l; i ++ ) {
+
+					var theta = i * 0.175 + Math.PI;
+					var y = - ( i * 8 ) + 450;
+
+					var object = new THREE.Object3D();
+
+					cylindrical.set( 900, theta, y );
+
+					object.position.setFromCylindrical( cylindrical );
+
+					vector.x = object.position.x * 2;
+					vector.y = object.position.y;
+					vector.z = object.position.z * 2;
+
+					object.lookAt( vector );
+
+					targets.helix.push( object );
+
+				}
+
+				// grid
+
+				for ( var i = 0; i < objects.length; i ++ ) {
+
+					var object = new THREE.Object3D();
+					// how big is the grid, default was 5 x 5
+					var gridSize = 9;
+					object.position.x = ( ( i % gridSize ) * 400 ) - 800;
+					object.position.y = ( - ( Math.floor( i / gridSize ) % gridSize ) * 400 ) + 800;
+					object.position.z = ( Math.floor( i / (gridSize*gridSize) ) ) * 1000 - 2000;
+
+					targets.grid.push( object );
+
+				}
+
+				//
+
+				renderer = new THREE.CSS3DRenderer();
+				renderer.setSize( window.innerWidth, window.innerHeight );
+				renderer.domElement.style.position = 'absolute';
+				document.getElementById( 'container' ).appendChild( renderer.domElement );
+
+				// what is used for controlling the view/navigation
+
+				controls = new THREE.TrackballControls( camera, renderer.domElement );
+				controls.rotateSpeed = 0.3;
+				controls.minDistance = 5;
+				controls.maxDistance = 60000;
+				controls.addEventListener( 'change', render );
+
+				// add controls for buttons
+
+				var button = document.getElementById( 'table' );
+				button.addEventListener( 'click', function ( event ) {
+					transform( targets.table, 2000 );
+				}, false );
+
+				var button = document.getElementById( 'sphere' );
+				button.addEventListener( 'click', function ( event ) {
+					transform( targets.sphere, 2000 );
+				}, false );
+
+				var button = document.getElementById( 'helix' );
+				button.addEventListener( 'click', function ( event ) {
+					transform( targets.helix, 2000 );
+				}, false );
+
+				var button = document.getElementById( 'grid' );
+				button.addEventListener( 'click', function ( event ) {
+					transform( targets.grid, 2000 );
+				}, false );
+				transform( targets.table, 2000 );
+
+				//
+
+				window.addEventListener( 'resize', onWindowResize, false );
+
+			}
+
+			function tweenStarted() {
+				tweens += 1;
+			}
+
+
+			function tweenFinished() {
+				tweens -= 1;
+				if (tweens <= 0) {
+					tweens = 0;
+					addLinks();
+				}
+			}
+
+			function transform( targets, duration ) {
+				TWEEN.removeAll();
+
+				for ( var i = 0; i < objects.length; i ++ ) {
+
+					var object = objects[ i ];
+					var target = targets[ i ];
+
+					tweenStarted();
+					new TWEEN.Tween( object.position )
+						.to( { x: target.position.x, y: target.position.y, z: target.position.z }, Math.random() * duration + duration )
+						.easing( TWEEN.Easing.Exponential.InOut )
+						.start()
+						// .start(function () { tweenStarted() })
+						.onComplete(function () { tweenFinished() });
+
+					tweenStarted();
+					new TWEEN.Tween( object.rotation )
+						.to( { x: target.rotation.x, y: target.rotation.y, z: target.rotation.z }, Math.random() * duration + duration )
+						.easing( TWEEN.Easing.Exponential.InOut )
+						.start()
+						// .start(function () { tweenStarted() })
+						.onComplete(function () { tweenFinished() });
+
+				}
+
+				new TWEEN.Tween( this )
+					.to( {}, duration * 2 )
+					.onUpdate( render )
+					.start();
+			}
+
+			function onWindowResize() {
+				camera.aspect = window.innerWidth / window.innerHeight;
+				camera.updateProjectionMatrix();
+				renderer.setSize( window.innerWidth, window.innerHeight );
+				render();
+			}
+
+			function animate() {
+				requestAnimationFrame( animate );
+				TWEEN.update();
+				controls.update();
+			}
+
+			function render() {
+				renderer.render( scene, camera );
+			}
+
+
+
+			function addLinks() {
+				for (var i = 0; i < tableLinks.length; i += 1) {
+					addLine(tableLinks[i][0], tableLinks[i][1]);
+				}
+			}
+
+			function addLine(item1Index, item2Index) {
+				if (item1Index >= 0 && item1Index < objects.length &&
+					item2Index >= 0 && item2Index < objects.length) {
+
+				    var element = document.createElement( 'div' );
+				    element.style.width = '1px';
+				    element.style.height = '3px';
+				    element.style.background = new THREE.Color( 0xff0000 ).getStyle();
+
+				    var object = new THREE.CSS3DObject( element );
+
+					var object1Position = objects[item1Index].position;
+					var object2Position = objects[item2Index].position;
+					var midlePosition = new THREE.Vector3(
+						(object1Position.x + object2Position.x) / 2,
+						(object1Position.y + object2Position.y) / 2,
+						(object1Position.z + object2Position.z) / 2
+					);
+
+					var distance = midlePosition.distanceTo(object1Position);
+				    object.scale.x = distance * 2;
+					object.position.copy(midlePosition);
+
+					var subVectors = new THREE.Vector3(
+						(object2Position.x - object1Position.x),
+						(object2Position.y - object1Position.y),
+						(object2Position.z - object1Position.z)
+					);
+					var gippo = Math.sqrt(subVectors.x * subVectors.x + subVectors.y * subVectors.y)
+					object.rotation.z = Math.asin(subVectors.y / gippo);
+
+				    scene.add( object );
+				}
+			}
+
+		</script>
+	</body>
+</html>
