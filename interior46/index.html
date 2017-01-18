@@ -54,6 +54,15 @@
 				<option value="Green" >Green</option>
 				<option value="Blue" >Blue</option>
 			</select><br>
+			Floor tiling:
+			<select name="floorTileSelect" onchange="floorTileChange(this.value);">
+				<option value="Default" selected>Default</option>
+				<option value="A4225_2A" >A4225_2A</option>
+				<option value="A4240_3A" >A4240_3A</option>
+				<option value="Stone1" >Stone1</option>
+				<option value="Stone2" >Stone2</option>
+			</select><br>
+
 			Wall element color:
 			<select name="wallElementColorSelect" onchange="wallElementChange(this.value);">
 				<option value="Brown" selected>Brown</option>
@@ -63,27 +72,33 @@
 
 		<script>
 			var camera, controls, scene, renderer;
-    		var meshContainer;
-    		var loadingManager = new THREE.LoadingManager();
-    		var partMeshes = {};
+			var meshContainer;
+			var loadingManager = new THREE.LoadingManager();
+			var partMeshes = {};
+
+			var room = {
+				sizeX: 4000,
+				sizeY: 7000,
+				sizeZ: 3000
+			}
 
 			init();
 			// animate();
 
 			function init() {
 
-				camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, 1, 60000 );
+				camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, 1, 600000 );
 				camera.position.set(0, 0, 1960);
 				// camera.lookAt(0, 1500, 0);
 				// camera.position.y = 1500;
 
 				scene = new THREE.Scene();
-		        meshContainer = new THREE.Group();
-		        meshContainer.position.y = -1300;
-		        scene.add(meshContainer);
+				meshContainer = new THREE.Group();
+				meshContainer.position.y = -1300;
+				scene.add(meshContainer);
 
-		        /*Light*/
-		        scene.add(new THREE.AmbientLight( 0xffffff ));
+				/*Light*/
+				scene.add(new THREE.AmbientLight( 0xffffff ));
 
 				renderer = new THREE.WebGLRenderer( { antialias: true } );
 				renderer.setSize( window.innerWidth, window.innerHeight, false );
@@ -93,14 +108,16 @@
 
 				controls = new THREE.OrbitControls( camera, renderer.domElement );
 				// controls.target.set(0, 1500, 0);
-				controls.maxDistance = 20000;
+				controls.maxDistance = 200000;
 				controls.enableKeys = false;
-            	controls.addEventListener('change', render);
+				controls.addEventListener('change', render);
 
 				window.addEventListener( 'resize', onWindowResize, false );
 
 				var parts = [
 					['floor.js', 'floorVRayCompleteMap.jpg'],
+					// ['floor-bledn.json', 'floorVRayCompleteMap.jpg'],
+
 					['floor-2.js', 'floor-2VRayCompleteMap.jpg'],
 					['windowView.js', 'windowViewVRayCompleteMap.jpg'],
 					['wall-1.js', 'wall-1VRayCompleteMap.jpg'],
@@ -146,20 +163,29 @@
 					['table2.js', 'table2VRayCompleteMap.jpg'],
 					['tvSet.js', 'tvSetVRayCompleteMap.jpg'],
 					['book.js', 'bookVRayCompleteMap.jpg'],
-					['box.js', 'boxVRayCompleteMap.jpg']
-				]
-
+					['box.js', 'boxVRayCompleteMap.jpg'],
+				];
 
 				parts.forEach(function (part) {
-	                var loaderJSON = new THREE.JSONLoader(loadingManager);
+					var loaderJSON = new THREE.JSONLoader(loadingManager);
 					var textureLoader = new THREE.TextureLoader(loadingManager);
 
-	                loaderJSON.load( part[0], function( geometryJSON ) {
+					loaderJSON.load( part[0], function( geometryJSON ) {
 						var texture = textureLoader.load( part[1] );
-	                    partMeshes[part[0].split('.js')[0]] = new THREE.Mesh( geometryJSON, new THREE.MeshPhongMaterial( { map:texture, shading:THREE.FlatShading } ) );
-	                    meshContainer.add(partMeshes[part[0].split('.js')[0]]);
-	                } );
+						var partMesh = new THREE.Mesh( geometryJSON, new THREE.MeshPhongMaterial({ map:texture }) );
+
+						if (part[0] === 'floor.js') {
+							var aoMap = textureLoader.load( 'floorVRayShadowMap.jpg' );
+							partMesh.material.aoMap = aoMap; // lightMap
+							partMesh.scale.set(1000, 1000, 1000);
+						}
+
+						meshContainer.add(partMesh);
+						partMeshes[part[0].split('.js')[0]] = partMesh;
+					} );
 				})
+
+
 
 				render();
 			}
@@ -181,6 +207,37 @@
 					Blue: 'floorBlueVRayCompleteMap.jpg'
 				}
 				setNewTexture('floor', colors[color]);
+			}
+
+			function floorTileChange(tile) {
+				var tiles = {
+					Default: {
+						file: 'floorVRayCompleteMap.jpg',
+						sizeX: room.sizeX,
+						sizeY: room.sizeY
+					},
+					A4225_2A: {
+						file: 'tiles/A4225_2A.jpg',
+						sizeX: 500,
+						sizeY: 500
+					},
+					A4240_3A: {
+						file: 'tiles/A4240_3A.jpg',
+						sizeX: 500,
+						sizeY: 500
+					},
+					Stone1: {
+						file: 'tiles/Stone1.jpg',
+						sizeX: 1000,
+						sizeY: 1000
+					},
+					Stone2: {
+						file: 'tiles/Stone2.jpg',
+						sizeX: 1000,
+						sizeY: 1000
+					}
+				}
+				setNewTexture('floor', tiles[tile].file, tiles[tile].sizeX, tiles[tile].sizeY);
 			}
 
 			function wallElementChange(color) {
@@ -210,10 +267,17 @@
 				setNewTexture('wall-1-6', colors[color][5]);
 			}
 
-			function setNewTexture(objectName, textureFileName) {
-				if (partMeshes[objectName]) {
+			function setNewTexture(objectName, file, sizeX, sizeY) {
+
+				console.log(objectName, file, sizeX, sizeY)
+				if (partMeshes[objectName] && file) {
 					var textureLoader = new THREE.TextureLoader(loadingManager);
-					partMeshes[objectName].material.map = textureLoader.load( textureFileName );
+					partMeshes[objectName].material.map = textureLoader.load( file );
+					if (sizeX && sizeY) {
+						partMeshes[objectName].material.map.wrapS = THREE.RepeatWrapping;
+						partMeshes[objectName].material.map.wrapT = THREE.RepeatWrapping;
+						partMeshes[objectName].material.map.repeat.set( room.sizeX / sizeX, room.sizeY / sizeY );
+					}
 				}
 			}
 
