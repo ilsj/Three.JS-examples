@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Box</title>
+		<meta charset="utf-8">
+		<style type="text/css" media="screen">
+			html, body {
+				overflow: hidden;
+			}
+
+			#logos-container img {
+				max-width: 64px;
+				max-height: 64px;
+				cursor: pointer;
+			}
+			#main-container {
+    			display: none;
+			}
+			#big-container {
+    			float: left;
+			}
+			#sub-containers canvas {
+				max-width: 128px;
+				max-height: 128px;
+    			display: block;
+				cursor: pointer;
+			}
+		</style>
+	</head>
+	<body>
+		<div>
+			<div id="logos-container">
+				<img src="logos/1.png" alt="">
+				<img src="logos/2.png" alt="">
+				<img src="logos/3.png" alt="">
+				<img src="logos/4.png" alt="">
+				<img src="logos/5.png" alt="">
+				<img src="logos/6.png" alt="">
+				<img src="logos/7.png" alt="">
+				<img src="logos/8.png" alt="">
+				<img src="logos/9.png" alt="">
+				<img src="logos/10.png" alt="">
+				<img src="logos/11.png" alt="">
+				<img src="logos/12.png" alt="">
+				<img src="logos/13.png" alt="">
+				<img src="logos/14.png" alt="">
+				<img src="logos/15.png" alt="">
+				<img src="logos/16.png" alt="">
+				<img src="logos/17.png" alt="">
+				<img src="logos/18.png" alt="">
+				<img src="logos/19.png" alt="">
+				<img src="logos/20.png" alt="">
+				<img src="logos/21.png" alt="">
+				<img src="logos/22.png" alt="">
+				<img src="logos/23.png" alt="">
+				<img src="logos/24.png" alt="">
+			</div>
+			<div id="main-container"></div>
+			<div id="big-container"></div>
+			<div id="sub-containers"></div>
+		</div>
+
+		<script src="../three.js/three.min.js"></script>
+		<script src="../three.js/OrbitControls.js"></script>
+		<script src="main.js" type="module"></script>
+	</body>
+</html>
